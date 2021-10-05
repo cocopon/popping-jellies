@@ -52,7 +52,7 @@ class Jelly {
 		fill(
 			map(this.group, 0, GROUP_COUNT - 1, 1, 140),
 			255,
-			255
+			255,
 		);
 		const sz = map(this.energy, 0, 1, 0, PARAMS.maxRadius);
 		circle(this.pos.x, this.pos.y, sz / 2);
@@ -92,6 +92,10 @@ function initDebug() {
 	pane.addInput(PARAMS, 'maxRadius', {min: 0, max: 2000, label: 'radius'});
 	pane.addInput(PARAMS, 'friction', {min: 0.8, max: 1});
 	pane.addInput(PARAMS, 'transfer', {min: 0, max: 1});
+	pane.addSeparator();
+	pane.addButton({title: 'Snapshot'}).on('click', () => {
+		saveCanvas('snapshot', 'png');
+	});
 }
 
 function setup() {
@@ -132,6 +136,7 @@ function draw() {
 
 	const mp = createVector(mouseX / zoom, mouseY / zoom);
 	jellies.forEach((j1) => {
+		// Attraction or repulsion
 		jellies.forEach((j2) => {
 			const f12 = computeJellyForce(
 				j1.pos, j2.pos,
@@ -143,6 +148,7 @@ function draw() {
 			j2.f.add(f12);
 		});
 
+		// Mouse interaction
 		if (mouseIsPressed) {
 			const fm = computeJellyForce(j1.pos, mp, 5, 5);
 			j1.f.add(fm);
