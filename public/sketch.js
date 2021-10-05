@@ -7,9 +7,11 @@ const PARAMS = {
 	bg: '#222',
 	blend: p5.prototype.ADD,
 	dt: 0.0004,
-	friction: {min: 0.75, max: 0.8},
-	hue: {min: 2, max: 140},
+	force: 0.5,
+	friction: {min: 0.8, max: 0.9},
+	hue: {min: 1, max: 140},
 	maxRadius: 1000,
+	range: 10,
 	transfer: {min: 0, max: 0.8},
 };
 
@@ -27,6 +29,7 @@ class Jelly {
 		this.pos = createVector(x, y);
 		this.vel = createVector();
 		this.energy = 0;
+		this.colorGroup_ = group;
 	}
 
 	update() {
@@ -52,8 +55,9 @@ class Jelly {
 	}
 
 	draw() {
+		this.colorGroup_ += (this.group - this.colorGroup_) * 0.1;
 		fill(
-			map(this.group, 0, GROUP_COUNT - 1, PARAMS.hue.min, PARAMS.hue.max),
+			map(this.colorGroup_, 0, GROUP_COUNT - 1, PARAMS.hue.min, PARAMS.hue.max),
 			255,
 			255,
 		);
@@ -97,11 +101,14 @@ function initDebug() {
 	});
 
 	const t0 = tab.pages[0];
+	t0.addInput(PARAMS, 'range', {min: 1, max: 100});
+	t0.addInput(PARAMS, 'force', {min: 0, max: 5});
+	t0.addSeparator();
 	t0.addInput(PARAMS, 'dt', {min: 0, max: 0.002});
 	t0.addMonitor(env, 't', {view: 'graph', lineCount: 1, min: 0, max: +1});
 	t0.addSeparator();
 	t0.addInput(PARAMS, 'maxRadius', {min: 0, max: 2000, label: 'radius'});
-	t0.addInput(PARAMS, 'friction', {min: 0.7, max: 1});
+	t0.addInput(PARAMS, 'friction', {min: 0.5, max: 1});
 	t0.addInput(PARAMS, 'transfer', {min: 0, max: 1});
 
 	const t1 = tab.pages[1];
@@ -155,8 +162,8 @@ function draw() {
 		jellies.forEach((j2) => {
 			const f12 = computeJellyForce(
 				j1.pos, j2.pos,
-				10,
-				j1.group === j2.group ? -1 : +1,
+				PARAMS.range,
+				PARAMS.force * (j1.group === j2.group ? -1 : +1),
 			);
 			j1.f.add(f12);
 			f12.mult(-1);
