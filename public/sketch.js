@@ -1,3 +1,4 @@
+/*! Popping Jelly (c) 2016 cocopon, licensed under the CC-BY-NC-SA 4.0. */
 const JELLY_COUNT = 100;
 const GROUP_COUNT = 3;
 const AREA_SIZE = 500;
