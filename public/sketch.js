@@ -27,23 +27,7 @@ class Jelly {
 		this.energy = 0;
 	}
 
-	reset() {
-		this.f.set(0, 0);
-	}
-
-	update(env) {
-		// External
-		const r1 = noise(this.pos.x * NOISE_SCALE, this.pos.y * NOISE_SCALE, env.noiseZ);
-		const angle = map(r1, 0, 1, -1, +1) * TWO_PI;
-		this.vel.x += cos(angle) * env.jellyPower;
-		this.vel.y += sin(angle) * env.jellyPower;
-		// Internal
-		const r2 = random(TWO_PI);
-		this.vel.x += cos(r2) * env.jellyPower * RANDOMNESS;
-		this.vel.y += sin(r2) * env.jellyPower * RANDOMNESS;
-
-		this.vel.mult(env.friction);
-
+	update() {
 		// a = f / m
 		const acc = this.f;
 		// v = v0 + a * t
@@ -66,13 +50,6 @@ class Jelly {
 	}
 
 	draw() {
-		this.energy = 0;
-		jellies.forEach((a) => {
-			const d = this.pos.dist(a.pos);
-			this.energy += pow(0.5, d * 0.1);
-		});
-		this.energy /= JELLY_COUNT;
-
 		fill(
 			map(this.group, 0, GROUP_COUNT - 1, 5, 140),
 			255,
@@ -81,6 +58,15 @@ class Jelly {
 		const sz = map(this.energy, 0, 1, MIN_RADIUS, MAX_RADIUS);
 		circle(this.pos.x, this.pos.y, sz / 2);
 	}
+}
+
+function computeJellyForce(p1, p2, attractive) {
+	const n12 = p5.Vector.sub(p1, p2);
+	const oldMag = n12.mag();
+	n12.setMag(
+		pow(0.5, oldMag * 1e-1) * MAX_FORCE * (attractive ? -1 : +1),
+	);
+	return n12;
 }
 
 function setup() {
@@ -123,32 +109,46 @@ function draw() {
 
 	env.noiseZ += TRANSITION_SPEED;
 
-	jellies.forEach((a) => {
-		a.reset();
+	jellies.forEach((j) => {
+		j.f.set(0, 0);
 	});
 
 	for (let j = 0; j < JELLY_COUNT; j++) {
 		for (let i = j + 1; i < JELLY_COUNT; i++) {
 			const j1 = jellies[i];
 			const j2 = jellies[j];
-			const n12 = p5.Vector.sub(j1.pos, j2.pos);
-			const oldMag = n12.mag();
-			n12.setMag(
-				pow(0.5, oldMag * 1e-1) * MAX_FORCE * (j1.group === j2.group ? -1 : +1),
-			);
-
-			j1.f.add(n12);
-			n12.mult(-1);
-			j2.f.add(n12);
+			const f12 = computeJellyForce(j1.pos, j2.pos, j1.group === j2.group);
+			j1.f.add(f12);
+			f12.mult(-1);
+			j2.f.add(f12);
 		}
 	}
 
-	jellies.forEach((j) => {
-		j.update(env);
+	jellies.forEach((jelly) => {
+		// External
+		const r1 = noise(jelly.pos.x * NOISE_SCALE, jelly.pos.y * NOISE_SCALE, env.noiseZ);
+		const angle = map(r1, 0, 1, -1, +1) * TWO_PI;
+		jelly.vel.x += cos(angle) * env.jellyPower;
+		jelly.vel.y += sin(angle) * env.jellyPower;
+		// Internal
+		const r2 = random(TWO_PI);
+		jelly.vel.x += cos(r2) * env.jellyPower * RANDOMNESS;
+		jelly.vel.y += sin(r2) * env.jellyPower * RANDOMNESS;
+
+		jelly.vel.mult(env.friction);
+
+		jelly.update(env);
 	});
 
-	jellies.forEach((j) => {
-		j.draw();
+	jellies.forEach((j1) => {
+		j1.energy = 0;
+		jellies.forEach((j2) => {
+			const d = j1.pos.dist(j2.pos);
+			j1.energy += pow(0.5, d * 0.1);
+		});
+		j1.energy /= JELLY_COUNT;
+
+		j1.draw();
 	});
 
 	pop();
