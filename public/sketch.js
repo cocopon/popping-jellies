@@ -1,6 +1,175 @@
-import Color from './color';
-import PixiSketch from './pixi_sketch';
-import Vector from './vector';
+function fromRgb(r, g, b) {
+	return (r << 16) | (g << 8) | b;
+}
+
+function fromHsb(h, s, b) {
+	const hi = Math.floor(h / 255 * 6) % 6;
+	const f = (h / 255 * 6) - Math.floor(h / 255 * 6);
+	const p = Math.round(b * (1 - (s / 255)));
+	const q = Math.round(b * (1 - (s / 255) * f));
+	const t = Math.round(b * (1 - (s / 255) * (1 - f)));
+	return fromRgb(...[
+		[b, t, p],
+		[q, b, p],
+		[p, b, t],
+		[p, q, b],
+		[t, p, b],
+		[b, p, q],
+	][hi]);
+}
+
+function getPixelRatio() {
+	return window.devicePixelRatio || 1;
+}
+
+class PixiSketch {
+	constructor(canvasElement) {
+		this.width = 100;
+		this.height = 100;
+		this.scale_ = 1.0;
+
+		const resolution = Math.min(getPixelRatio(), 2);
+		this.renderer_ = PIXI.autoDetectRenderer(
+			this.width,
+			this.height,
+			{
+				antialias: true,
+				backgroundColor: 0x222222,
+				resolution: resolution,
+				view: canvasElement
+			}
+		);
+		this.renderer_.view.style.transform = `scale(${1 / resolution}, ${1 / resolution})`;
+
+		this.stage_ = new PIXI.Container();
+
+		window.onresize = () => {
+			this.applyWindowSize_();
+		};
+		this.applyWindowSize_();
+
+		document.addEventListener('DOMContentLoaded', () => {
+			this.setup();
+			this.loop_();
+		});
+	}
+
+	getStage() {
+		return this.stage_;
+	}
+
+	getScale(scale) {
+		this.scale_ = scale;
+	}
+
+	setScale(scale) {
+		this.scale_ = scale;
+		this.stage_.scale.x = this.scale_;
+		this.stage_.scale.y = this.scale_;
+	}
+
+	setup() {}
+	update() {}
+
+	loop_() {
+		this.update();
+
+		this.renderer_.render(this.stage_);
+		requestAnimationFrame(() => {
+			this.loop_();
+		});
+	}
+
+	applyWindowSize_() {
+		const elem = this.renderer_.view;
+		const parentElem = elem.parentElement;
+
+		this.width = parentElem.clientWidth;
+		this.height = parentElem.clientHeight;
+
+		this.renderer_.resize(
+			this.width,
+			this.height
+		);
+
+		elem.style.opacity = '0';
+		elem.style.transition = 'all 0s ease';
+		if (this.timer_ !== undefined) {
+			clearTimeout(this.timer_);
+		}
+		this.timer_ = setTimeout(() => {
+			elem.style.opacity = '1';
+			elem.style.transition = 'opacity 1.0s ease-out';
+		}, this.constructor.SHOWING_DELAY);
+	}
+}
+
+PixiSketch.SHOWING_DELAY = 1000;
+
+class Vector {
+	static isVector(v) {
+		return v.x !== undefined &&
+			v.y !== undefined;
+	}
+
+	static add(v1, v2) {
+		if (this.isVector(v2)) {
+			v1.x += v2.x;
+			v1.y += v2.y;
+		}
+		else {
+			v1.x += v2;
+			v1.y += v2;
+		}
+	}
+
+	static sub(v1, v2) {
+		if (this.isVector(v2)) {
+			v1.x -= v2.x;
+			v1.y -= v2.y;
+		}
+		else {
+			v1.x -= v2;
+			v1.y -= v2;
+		}
+	}
+
+	static mult(v1, v2) {
+		if (this.isVector(v2)) {
+			v1.x *= v2.x;
+			v1.y *= v2.y;
+		}
+		else {
+			v1.x *= v2;
+			v1.y *= v2;
+		}
+	}
+
+	static div(v1, v2) {
+		if (this.isVector(v2)) {
+			v1.x /= v2.x;
+			v1.y /= v2.y;
+		}
+		else {
+			v1.x /= v2;
+			v1.y /= v2;
+		}
+	}
+
+	static mag(v) {
+		return Math.sqrt(v.x * v.x + v.y * v.y);
+	}
+
+	static dist(v1, v2) {
+		const dx = v1.x - v2.x;
+		const dy = v1.y - v2.y;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+
+	static heading(v) {
+		return Math.atan2(v.y, v.x);
+	}
+}
 
 const AGENT_COUNT = 100;
 const GROUP_COUNT = 3;
@@ -75,7 +244,7 @@ class Agent {
 		});
 		this.energy_ /= AGENT_COUNT;
 
-		const col = Color.fromHsb(
+		const col = fromHsb(
 			p5.prototype.map(this.group, 0, GROUP_COUNT, 5, 140),
 			255,
 			255
@@ -88,8 +257,6 @@ class Agent {
 }
 
 sketch.setup = () => {
-	sketch.getRenderer().backgroundColor = 0x222222;
-
 	sketch.noiseZ_ = 0;
 	sketch.t_ = 0;
 
