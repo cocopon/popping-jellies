@@ -60,13 +60,15 @@ class Jelly {
 	}
 }
 
-function computeJellyForce(p1, p2, attractive) {
+function computeJellyForce(p1, p2, range, maxForce) {
 	const n12 = p5.Vector.sub(p1, p2);
 	const oldMag = n12.mag();
-	n12.setMag(
-		pow(0.5, oldMag * 1e-1) * MAX_FORCE * (attractive ? -1 : +1),
-	);
+	n12.setMag(pow(0.5, oldMag / range) * maxForce);
 	return n12;
+}
+
+function getZoom() {
+	return max(1, width / AREA_SIZE, height / AREA_SIZE);
 }
 
 function setup() {
@@ -89,16 +91,13 @@ function draw() {
 	blendMode(ADD);
 
 	push();
-	scale(max(
-		1,
-		width / AREA_SIZE,
-		height / AREA_SIZE,
-	));
+	scale(getZoom());
 
-	const t = -cos((frameCount * 0.001) * TWO_PI);
-	env.friction = map(t, -1, +1, 0.9, 0.95);
-	env.jellyPower = map(t, -1, +1, 0.05, 0.08);
-	env.transferRate = map(t, -1, +1, 0.5, 0.8);
+	const t = -cos((frameCount * 0.0005) * TWO_PI);
+	env.friction = map(t, -1, +1, 0.9, 0.93);
+	env.jellyPower = map(t, -1, +1, 0.04, 0.06);
+	env.transferRate = map(t, -1, +1, 0.2, 0.7);
+	env.noiseZ += TRANSITION_SPEED;
 
 	if (random() < env.transferRate) {
 		const jelly = jellies[floor(random(JELLY_COUNT))];
@@ -107,22 +106,25 @@ function draw() {
 		}
 	}
 
-	env.noiseZ += TRANSITION_SPEED;
-
-	jellies.forEach((j) => {
-		j.f.set(0, 0);
-	});
-
-	for (let j = 0; j < JELLY_COUNT; j++) {
-		for (let i = j + 1; i < JELLY_COUNT; i++) {
-			const j1 = jellies[i];
-			const j2 = jellies[j];
-			const f12 = computeJellyForce(j1.pos, j2.pos, j1.group === j2.group);
+	const z = getZoom();
+	const mp = createVector(mouseX / z, mouseY / z);
+	jellies.forEach((j1) => {
+		jellies.forEach((j2) => {
+			const f12 = computeJellyForce(
+				j1.pos, j2.pos,
+				10,
+				j1.group === j2.group ? -1 : +1,
+			);
 			j1.f.add(f12);
 			f12.mult(-1);
 			j2.f.add(f12);
+		});
+
+		if (mouseIsPressed) {
+			const fm = computeJellyForce(j1.pos, mp, 5, 5);
+			j1.f.add(fm);
 		}
-	}
+	});
 
 	jellies.forEach((jelly) => {
 		// External
@@ -149,7 +151,11 @@ function draw() {
 		j1.energy /= JELLY_COUNT;
 
 		j1.draw();
+		j1.f.set(0, 0);
 	});
 
 	pop();
+}
+
+function mousePressed() {
 }
