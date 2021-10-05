@@ -1,4 +1,4 @@
-# Popping Jelly
+# Popping Jellies
 
 ```
 % npm install
