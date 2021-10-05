@@ -4,8 +4,11 @@ const GROUP_COUNT = 3;
 const AREA_SIZE = 400;
 const MARGIN = 10;
 const PARAMS = {
+	bg: '#222',
+	blend: p5.prototype.ADD,
 	dt: 0.0004,
-	friction: {min: 0.85, max: 0.9},
+	friction: {min: 0.75, max: 0.8},
+	hue: {min: 2, max: 140},
 	maxRadius: 1000,
 	transfer: {min: 0, max: 0.8},
 };
@@ -50,7 +53,7 @@ class Jelly {
 
 	draw() {
 		fill(
-			map(this.group, 0, GROUP_COUNT - 1, 1, 140),
+			map(this.group, 0, GROUP_COUNT - 1, PARAMS.hue.min, PARAMS.hue.max),
 			255,
 			255,
 		);
@@ -85,16 +88,27 @@ function initDebug() {
 		title: 'Parameters',
 	});
 	pane.registerPlugin(TweakpaneEssentialsPlugin);
-
-	pane.addInput(PARAMS, 'dt', {min: 0, max: 0.002});
-	pane.addMonitor(env, 't', {view: 'graph', lineCount: 1, min: 0, max: +1});
-	pane.addSeparator();
-	pane.addInput(PARAMS, 'maxRadius', {min: 0, max: 2000, label: 'radius'});
-	pane.addInput(PARAMS, 'friction', {min: 0.8, max: 1});
-	pane.addInput(PARAMS, 'transfer', {min: 0, max: 1});
-	pane.addSeparator();
-	pane.addButton({title: 'Snapshot'}).on('click', () => {
+	pane.addButton({label: 'canvas', title: 'Save'}).on('click', () => {
 		saveCanvas('snapshot', 'png');
+	});
+
+	const tab = pane.addTab({
+		pages: [{title: 'Behavior'}, {title: 'Appearance'}],
+	});
+
+	const t0 = tab.pages[0];
+	t0.addInput(PARAMS, 'dt', {min: 0, max: 0.002});
+	t0.addMonitor(env, 't', {view: 'graph', lineCount: 1, min: 0, max: +1});
+	t0.addSeparator();
+	t0.addInput(PARAMS, 'maxRadius', {min: 0, max: 2000, label: 'radius'});
+	t0.addInput(PARAMS, 'friction', {min: 0.7, max: 1});
+	t0.addInput(PARAMS, 'transfer', {min: 0, max: 1});
+
+	const t1 = tab.pages[1];
+	t1.addInput(PARAMS, 'bg');
+	t1.addInput(PARAMS, 'hue', {min: 0, max: 360, step: 1});
+	t1.addInput(PARAMS, 'blend', {
+		options: [ADD, BLEND, SCREEN, LIGHTEST].map((b) => ({text: b, value: b})),
 	});
 }
 
@@ -102,6 +116,7 @@ function setup() {
 	const w = windowWidth;
 	createCanvas(w, w);
 	colorMode(HSB, 360, 255, 255);
+	noStroke();
 
 	for (let i = 0; i < JELLY_COUNT; i++) {
 		jellies.push(new Jelly(
@@ -118,8 +133,8 @@ function setup() {
 
 function draw() {
 	blendMode(BLEND);
-	background(0, 0, 0x22);
-	blendMode(ADD);
+	background(PARAMS.bg);
+	blendMode(PARAMS.blend);
 
 	push();
 	const zoom = max(1, width / AREA_SIZE, height / AREA_SIZE);
