@@ -186,7 +186,7 @@ function draw() {
 		j1.energy = 0;
 		jellies.forEach((j2) => {
 			const d = j1.pos.dist(j2.pos);
-			j1.energy += pow(0.5, d * 0.1);
+			j1.energy += j1.group === j2.group ? pow(0.5, d * 0.1) : 0;
 		});
 		j1.energy /= JELLY_COUNT;
 
