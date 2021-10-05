@@ -1,21 +1,20 @@
 /*! Popping Jelly (c) 2016 cocopon, licensed under the CC-BY-NC-SA 4.0. */
 const JELLY_COUNT = 100;
 const GROUP_COUNT = 3;
-const AREA_SIZE = 500;
-const NOISE_SCALE = 0.01;
-const TRANSITION_SPEED = 0.005;
-const RANDOMNESS = 2.0;
+const AREA_SIZE = 400;
 const MARGIN = 10;
-const MIN_RADIUS = 0;
-const MAX_RADIUS = 1000;
-const MAX_FORCE = 1.0;
+const PARAMS = {
+	dt: 0.0004,
+	friction: {min: 0.85, max: 0.9},
+	maxRadius: 1000,
+	transfer: {min: 0, max: 0.8},
+};
 
 const jellies = [];
 const env = {
 	friction: 0,
-	jellyPower: 0,
-	noiseZ: 0,
-	transferRate: 0,
+	t: 0,
+	transfer: 0,
 };
 
 class Jelly {
@@ -51,11 +50,11 @@ class Jelly {
 
 	draw() {
 		fill(
-			map(this.group, 0, GROUP_COUNT - 1, 5, 140),
+			map(this.group, 0, GROUP_COUNT - 1, 1, 140),
 			255,
 			255
 		);
-		const sz = map(this.energy, 0, 1, MIN_RADIUS, MAX_RADIUS);
+		const sz = map(this.energy, 0, 1, 0, PARAMS.maxRadius);
 		circle(this.pos.x, this.pos.y, sz / 2);
 	}
 }
@@ -67,8 +66,32 @@ function computeJellyForce(p1, p2, range, maxForce) {
 	return n12;
 }
 
-function getZoom() {
-	return max(1, width / AREA_SIZE, height / AREA_SIZE);
+function updateEnv() {
+	env.t = pow(sin((frameCount * PARAMS.dt) * TWO_PI), 4);
+	env.friction = map(
+		env.t,
+		0, 1,
+		PARAMS.friction.min, PARAMS.friction.max,
+	);
+	env.transfer = map(
+		env.t,
+		0, 1,
+		PARAMS.transfer.min, PARAMS.transfer.max,
+	);
+}
+
+function initDebug() {
+	const pane = new Tweakpane.Pane({
+		title: 'Parameters',
+	});
+	pane.registerPlugin(TweakpaneEssentialsPlugin);
+
+	pane.addInput(PARAMS, 'dt', {min: 0, max: 0.002});
+	pane.addMonitor(env, 't', {view: 'graph', lineCount: 1, min: 0, max: +1});
+	pane.addSeparator();
+	pane.addInput(PARAMS, 'maxRadius', {min: 0, max: 2000, label: 'radius'});
+	pane.addInput(PARAMS, 'friction', {min: 0.8, max: 1});
+	pane.addInput(PARAMS, 'transfer', {min: 0, max: 1});
 }
 
 function setup() {
@@ -83,6 +106,10 @@ function setup() {
 			floor(random(GROUP_COUNT)),
 		));
 	}
+
+	if (location.search.match('debug')) {
+		initDebug();
+	}
 }
 
 function draw() {
@@ -91,23 +118,19 @@ function draw() {
 	blendMode(ADD);
 
 	push();
-	scale(getZoom());
+	const zoom = max(1, width / AREA_SIZE, height / AREA_SIZE);
+	scale(zoom);
 
-	const t = -cos((frameCount * 0.0005) * TWO_PI);
-	env.friction = map(t, -1, +1, 0.9, 0.93);
-	env.jellyPower = map(t, -1, +1, 0.04, 0.06);
-	env.transferRate = map(t, -1, +1, 0.2, 0.7);
-	env.noiseZ += TRANSITION_SPEED;
+	updateEnv();
 
-	if (random() < env.transferRate) {
+	if (random() < env.transfer) {
 		const jelly = jellies[floor(random(JELLY_COUNT))];
 		if (jelly.energy > 0.02) {
 			jelly.group = floor(random(GROUP_COUNT));
 		}
 	}
 
-	const z = getZoom();
-	const mp = createVector(mouseX / z, mouseY / z);
+	const mp = createVector(mouseX / zoom, mouseY / zoom);
 	jellies.forEach((j1) => {
 		jellies.forEach((j2) => {
 			const f12 = computeJellyForce(
@@ -127,18 +150,7 @@ function draw() {
 	});
 
 	jellies.forEach((jelly) => {
-		// External
-		const r1 = noise(jelly.pos.x * NOISE_SCALE, jelly.pos.y * NOISE_SCALE, env.noiseZ);
-		const angle = map(r1, 0, 1, -1, +1) * TWO_PI;
-		jelly.vel.x += cos(angle) * env.jellyPower;
-		jelly.vel.y += sin(angle) * env.jellyPower;
-		// Internal
-		const r2 = random(TWO_PI);
-		jelly.vel.x += cos(r2) * env.jellyPower * RANDOMNESS;
-		jelly.vel.y += sin(r2) * env.jellyPower * RANDOMNESS;
-
 		jelly.vel.mult(env.friction);
-
 		jelly.update(env);
 	});
 
@@ -155,7 +167,4 @@ function draw() {
 	});
 
 	pop();
-}
-
-function mousePressed() {
 }
