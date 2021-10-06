@@ -74,20 +74,6 @@ function computeJellyForce(p1, p2, range, maxForce) {
 	return n12;
 }
 
-function updateEnv() {
-	env.t = pow(sin((frameCount * PARAMS.dt) * TWO_PI), 4);
-	env.friction = map(
-		env.t,
-		0, 1,
-		PARAMS.friction.min, PARAMS.friction.max,
-	);
-	env.transfer = map(
-		env.t,
-		0, 1,
-		PARAMS.transfer.min, PARAMS.transfer.max,
-	);
-}
-
 function initDebug() {
 	const pane = new Tweakpane.Pane({
 		title: 'Parameters',
@@ -147,7 +133,17 @@ function draw() {
 	const zoom = max(1, width / AREA_SIZE, height / AREA_SIZE);
 	scale(zoom);
 
-	updateEnv();
+	env.t = pow(sin((frameCount * PARAMS.dt) * TWO_PI), 4);
+	env.friction = map(
+		env.t,
+		0, 1,
+		PARAMS.friction.min, PARAMS.friction.max,
+	);
+	env.transfer = map(
+		env.t,
+		0, 1,
+		PARAMS.transfer.min, PARAMS.transfer.max,
+	);
 
 	if (random() < env.transfer) {
 		const jelly = jellies[floor(random(JELLY_COUNT))];
@@ -179,7 +175,7 @@ function draw() {
 
 	jellies.forEach((jelly) => {
 		jelly.vel.mult(env.friction);
-		jelly.update(env);
+		jelly.update();
 	});
 
 	jellies.forEach((j1) => {
