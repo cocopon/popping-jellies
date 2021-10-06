@@ -1,7 +1,7 @@
 {
   "name": "popping_jellies",
   "version": "0.0.0",
-  "description": "",
+  "description": "The attraction and repulsion of the three groups of jellies.",
   "scripts": {
     "start": "run-p server",
     "server": "http-server -c-1 public"

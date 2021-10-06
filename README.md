@@ -1,5 +1,7 @@
 # Popping Jellies
 
+![](screenshot.png)
+
 ```
 % npm install
 % npm start
