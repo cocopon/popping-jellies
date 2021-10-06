@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "start": "run-p server",
-    "server": "http-server public"
+    "server": "http-server -c-1 public"
   },
   "author": "cocopon",
   "license": "CC-BY-NC-SA",
