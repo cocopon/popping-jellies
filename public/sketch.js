@@ -8,12 +8,13 @@ const PARAMS = {
 	blend: p5.prototype.ADD,
 	dt: 0.0004,
 	force: 0.5,
-	friction: {min: 0.8, max: 0.9},
+	friction: {min: 0.8, max: 0.85},
 	hue: {min: 1, max: 140},
 	maxRadius: 1000,
 	range: 10,
 	transfer: {min: 0, max: 0.8},
 };
+const DEBUG = location.search.match('debug');
 
 const jellies = [];
 const env = {
@@ -132,7 +133,7 @@ function setup() {
 		));
 	}
 
-	if (location.search.match('debug')) {
+	if (DEBUG) {
 		initDebug();
 	}
 }
@@ -201,5 +202,7 @@ function windowResized() {
 }
 
 function touchStarted() {
-	return false;
+	if (!DEBUG) {
+		return false;
+	}
 }
