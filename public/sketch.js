@@ -10,7 +10,7 @@ const PARAMS = {
 	force: 0.5,
 	friction: {min: 0.8, max: 0.85},
 	hue: {min: 1, max: 140},
-	maxRadius: 1000,
+	maxSize: 1000,
 	range: 10,
 	transfer: {min: 0, max: 1},
 };
@@ -62,7 +62,7 @@ class Jelly {
 			255,
 			255,
 		);
-		const sz = map(this.energy, 0, 1, 0, PARAMS.maxRadius);
+		const sz = map(this.energy, 0, 1, 0, PARAMS.maxSize);
 		circle(this.pos.x, this.pos.y, sz / 2);
 	}
 }
@@ -108,7 +108,7 @@ function initDebug() {
 	t0.addInput(PARAMS, 'dt', {min: 0, max: 0.002});
 	t0.addMonitor(env, 't', {view: 'graph', lineCount: 1, min: 0, max: +1});
 	t0.addSeparator();
-	t0.addInput(PARAMS, 'maxRadius', {min: 0, max: 2000, label: 'radius'});
+	t0.addInput(PARAMS, 'maxSize', {min: 0, max: 2000, label: 'radius'});
 	t0.addInput(PARAMS, 'friction', {min: 0.5, max: 1});
 	t0.addInput(PARAMS, 'transfer', {min: 0, max: 1});
 
