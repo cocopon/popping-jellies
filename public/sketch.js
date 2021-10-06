@@ -120,8 +120,7 @@ function initDebug() {
 }
 
 function setup() {
-	const w = windowWidth;
-	createCanvas(w, w);
+	createCanvas(windowWidth, windowWidth);
 	colorMode(HSB, 360, 255, 255);
 	noStroke();
 
@@ -195,6 +194,10 @@ function draw() {
 	});
 
 	pop();
+}
+
+function windowResized() {
+	resizeCanvas(windowWidth, windowWidth);
 }
 
 function touchStarted() {
