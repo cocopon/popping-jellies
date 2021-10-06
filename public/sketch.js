@@ -12,7 +12,7 @@ const PARAMS = {
 	hue: {min: 1, max: 140},
 	maxRadius: 1000,
 	range: 10,
-	transfer: {min: 0, max: 0.8},
+	transfer: {min: 0, max: 1},
 };
 const DEBUG = location.search.match('debug');
 
