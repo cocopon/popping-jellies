@@ -196,3 +196,7 @@ function draw() {
 
 	pop();
 }
+
+function touchStarted() {
+	return false;
+}
