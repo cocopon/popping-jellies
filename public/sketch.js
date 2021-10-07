@@ -94,7 +94,7 @@ function initDebug() {
 	t0.addInput(PARAMS, 'dt', {min: 0, max: 0.002});
 	t0.addMonitor(env, 't', {view: 'graph', lineCount: 1, min: 0, max: +1});
 	t0.addSeparator();
-	t0.addInput(PARAMS, 'maxSize', {min: 0, max: 2000, label: 'radius'});
+	t0.addInput(PARAMS, 'maxSize', {min: 0, max: 2000, label: 'size'});
 	t0.addInput(PARAMS, 'friction', {min: 0.5, max: 1});
 	t0.addInput(PARAMS, 'transfer', {min: 0, max: 1});
 
